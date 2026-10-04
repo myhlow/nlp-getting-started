@@ -14,15 +14,16 @@ A complete, systematic natural language processing study for the [Kaggle NLP wit
 
 Each experiment establishes a disciplined step up in modeling complexity, evaluated with **5-Fold Stratified Cross-Validation** using Kaggle's official metric: `F1-Score` on real disaster tweets (Class 1).
 
-| Exp | Script | Model / Strategy | 5-Fold OOF F1 | 5-Fold OOF Acc | Train Time | Test Submission |
-| :---: | :--- | :--- | :---: | :---: | :---: | :--- |
-| **01** | [`exp01_baselines.py`](exp01_baselines.py) | Constant Majority Class (All 0s) | 0.0000 | 57.03% | <0.1s | [`submission_majority.csv`](submission_majority.csv) |
-| **01b** | [`exp01_baselines.py`](exp01_baselines.py) | Empirical Random Prior (`p=0.430`) | 0.4145 | 49.98% | <0.1s | [`submission_random.csv`](submission_random.csv) |
-| **02** | [`exp02_countvec_naive_bayes.py`](exp02_countvec_naive_bayes.py) | CountVectorizer (1,2-gram) + Multinomial Naive Bayes | 0.7509 | 80.13% | 2.4s | [`submission_countvec_nb.csv`](submission_countvec_nb.csv) |
-| **03** | [`exp03_tfidf_linear_models.py`](exp03_tfidf_linear_models.py) | Sublinear TF-IDF + Ridge Classifier (`alpha=1.0`) | 0.7581 | 80.30% | 2.2s | [`submission_tfidf_ridge.csv`](submission_tfidf_ridge.csv) |
-| **03b** | [`exp03_tfidf_linear_models.py`](exp03_tfidf_linear_models.py) | Sublinear TF-IDF + Logistic Regression (`C=1.5`, `t=0.45`) | 0.7646 | 80.11% | 2.7s | [`submission_tfidf_logistic.csv`](submission_tfidf_logistic.csv) |
-| **04** | [`exp04_catboost_text.py`](exp04_catboost_text.py) | CatBoost Native Text Gradient Boosted Trees | 0.7560 | 78.88% | 158.5s | [`submission_catboost.csv`](submission_catboost.csv) |
-| **05** | [`exp05_ensemble.py`](exp05_ensemble.py) | **Multi-Model Weighted Ensemble (40% LR + 10% NB + 50% Ridge, `t=0.43`)** | **0.7660** | **79.88%** | **2.6s** | [`submission_ensemble.csv`](submission_ensemble.csv) |
+| Exp | Script | Model / Strategy | 5-Fold OOF F1 | 5-Fold OOF Acc | Kaggle Public Score | LB Rank | Test Submission |
+| :---: | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **01a** | [`exp01_baselines.py`](exp01_baselines.py) | Constant Majority Class (All 0s) | 0.0000 | 57.03% | **`0.57033`** | #431 / 436 | [`submission_majority.csv`](submission_majority.csv) |
+| **01b** | [`exp01_baselines.py`](exp01_baselines.py) | Constant Minority Class (All 1s) | 0.6011 | 42.97% | **`0.42966`** | #434 / 436 | [`submission_constant_1.csv`](submission_constant_1.csv) |
+| **01c** | [`exp01_baselines.py`](exp01_baselines.py) | Empirical Random Prior (`p=0.430`) | 0.4145 | 49.98% | **`0.51087`** | Baseline | [`submission_random.csv`](submission_random.csv) |
+| **02** | [`exp02_countvec_naive_bayes.py`](exp02_countvec_naive_bayes.py) | CountVectorizer (1,2-gram) + Multinomial NB | 0.7509 | 80.13% | Pending | &mdash; | [`submission_countvec_nb.csv`](submission_countvec_nb.csv) |
+| **03** | [`exp03_tfidf_linear_models.py`](exp03_tfidf_linear_models.py) | Sublinear TF-IDF + Ridge Classifier (`alpha=1.0`) | 0.7581 | 80.30% | Pending | &mdash; | [`submission_tfidf_ridge.csv`](submission_tfidf_ridge.csv) |
+| **03b** | [`exp03_tfidf_linear_models.py`](exp03_tfidf_linear_models.py) | Sublinear TF-IDF + Logistic Regression (`C=1.5`) | 0.7646 | 80.11% | Pending | &mdash; | [`submission_tfidf_logistic.csv`](submission_tfidf_logistic.csv) |
+| **04** | [`exp04_catboost_text.py`](exp04_catboost_text.py) | CatBoost Native Text Gradient Boosted Trees | 0.7560 | 78.88% | Pending | &mdash; | [`submission_catboost.csv`](submission_catboost.csv) |
+| **05** | [`exp05_ensemble.py`](exp05_ensemble.py) | **Multi-Model Weighted Ensemble (`t=0.43`)** | **0.7660** | **79.88%** | **Pending** | &mdash; | [`submission_ensemble.csv`](submission_ensemble.csv) |
 
 ---
 
