@@ -14,13 +14,14 @@ def preprocess_text(df):
 
 def find_best_threshold(y_true, probs):
     best_t = 0.5
-    best_f1 = 0.0
-    for t in np.linspace(0.30, 0.70, 41):
-        score = f1_score(y_true, (probs >= t).astype(int), zero_division=0)
-        if score > best_f1:
-            best_f1 = score
+    best_acc = 0.0
+    for t in np.linspace(0.35, 0.65, 61):
+        score = accuracy_score(y_true, (probs >= t).astype(int))
+        if score > best_acc:
+            best_acc = score
             best_t = t
-    return best_t, best_f1
+    return best_t, best_acc
+
 
 def main():
     print("=" * 65)
@@ -92,32 +93,33 @@ def main():
     print(f"  Sigmoid Ridge:       {f1_score(y, (oof_ridge >= 0.5).astype(int)):.4f}")
 
     # Optimize weights
-    print("\nGrid Search over Ensemble Weights...")
+    print("\nGrid Search over Ensemble Weights (Optimizing Categorical Accuracy)...")
     best_weights = None
-    best_f1 = 0.0
+    best_acc = 0.0
     best_t = 0.5
 
-    for w_lr in np.linspace(0.4, 0.8, 5):
-        for w_nb in np.linspace(0.1, 0.4, 4):
+    for w_lr in np.linspace(0.2, 0.8, 7):
+        for w_nb in np.linspace(0.0, 0.4, 5):
             w_rd = 1.0 - w_lr - w_nb
-            if w_rd < 0:
+            if w_rd < -1e-5:
                 continue
+            w_rd = max(0.0, w_rd)
             blend_oof = w_lr * oof_lr + w_nb * oof_nb + w_rd * oof_ridge
-            t_cand, f1_cand = find_best_threshold(y, blend_oof)
-            if f1_cand > best_f1:
-                best_f1 = f1_cand
+            t_cand, acc_cand = find_best_threshold(y, blend_oof)
+            if acc_cand > best_acc:
+                best_acc = acc_cand
                 best_t = t_cand
                 best_weights = (w_lr, w_nb, w_rd)
 
     print("-" * 65)
     print(f"Optimal Weights: LR={best_weights[0]:.2f}, NB={best_weights[1]:.2f}, Ridge={best_weights[2]:.2f}")
-    print(f"Optimal Decision Threshold: {best_t:.2f}")
+    print(f"Optimal Decision Threshold: {best_t:.3f}")
     blend_oof_final = best_weights[0] * oof_lr + best_weights[1] * oof_nb + best_weights[2] * oof_ridge
     oof_preds_final = (blend_oof_final >= best_t).astype(int)
     final_f1 = f1_score(y, oof_preds_final)
     final_acc = accuracy_score(y, oof_preds_final)
-    print(f"Ensemble 5-Fold OOF F1-Score: {final_f1:.4f}")
     print(f"Ensemble 5-Fold OOF Accuracy: {final_acc*100:.2f}%")
+    print(f"Ensemble 5-Fold OOF F1-Score: {final_f1:.4f}")
     print(f"Total Ensemble Run Time:     {train_time:.2f}s")
     print("-" * 65)
 

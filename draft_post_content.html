@@ -202,16 +202,16 @@ print("Generated and verified all three baseline submissions!")</code></pre>
 <!-- SECTION 6: WHAT COMES NEXT -->
 <div style="border:1px solid #1a2f45;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#1a2f45;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    6 &nbsp;&middot;&nbsp; What Comes Next: Climbing to 80.59% in Part 2
+    6 &nbsp;&middot;&nbsp; What Comes Next: Breaking 80% on the Leaderboard in Part 2
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#2c3e50">
     <p style="margin:0 0 10px 0">Knowing that the live leaderboard evaluates classification accuracy allows us to align our validation objective perfectly. In Part 2, we leave zero-learning baselines behind and deploy genuine NLP feature engineering and machine learning:</p>
     <ul style="margin:0 0 12px 0;padding-left:1.2em">
-      <li style="margin-bottom:6px"><strong>Keyword Semantic Anchors:</strong> URL-decoding `%20` tags and anchoring fragmented tweets with structured keyword prefixes.</li>
-      <li style="margin-bottom:6px"><strong>CountVec &amp; Multinomial Naive Bayes:</strong> Beating the baseline in 2.4 seconds with <code>80.13%</code> accuracy.</li>
-      <li style="margin-bottom:6px"><strong>Sublinear TF-IDF &amp; Logistic Regression:</strong> Reaching <strong><code>80.59%</code> accuracy</strong> in 2.7 seconds on mobile CPU.</li>
-      <li style="margin-bottom:6px"><strong>Tri-Model Ensemble:</strong> Uniting generative, margin, and logistic models to leap from Rank #431 deep into the competitive tiers.</li>
+      <li style="margin-bottom:6px"><strong>Keyword Semantic Anchors:</strong> URL-decoding <code>%20</code> tags and anchoring fragmented tweets with structured keyword prefixes.</li>
+      <li style="margin-bottom:6px"><strong>CountVec &amp; Multinomial Naive Bayes:</strong> Rocketing from Rank #431 to Rank #314 (<strong>+117 places</strong>) with <code>0.79497</code> public score in 2.4 seconds.</li>
+      <li style="margin-bottom:6px"><strong>Sublinear TF-IDF &amp; Logistic Regression:</strong> Advancing to <code>0.79957</code> (Rank #269, <strong>+45 places</strong>) in 2.7 seconds on mobile CPU.</li>
+      <li style="margin-bottom:6px"><strong>Word + Character N-Gram FeatureUnion:</strong> Breaking the 80% barrier to reach <strong><code>0.80478</code></strong> (Rank #221, <strong>+48 places</strong>) by capturing noisy Twitter subwords and typos.</li>
     </ul>
-    <p style="margin:0">Stay tuned for the full modeling breakdown in Part 2!</p>
+    <p style="margin:0">Stay tuned for the full modeling breakdown, comparative charts, and open-source pipelines in Part 2!</p>
   </div>
 </div>
