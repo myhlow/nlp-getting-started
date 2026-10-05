@@ -1,5 +1,5 @@
-__pycache__/
-*.py[cod]
-*$py.class
+*.npy
+*.zip
 catboost_info/
-.ipynb_checkpoints/
+leaderboard_data/
+lb/
