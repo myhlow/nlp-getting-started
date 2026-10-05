@@ -23,9 +23,11 @@ Each experiment establishes a disciplined step up in modeling complexity, evalua
 | **2** | [`exp03_tfidf_linear_models.py`](exp03_tfidf_linear_models.py) | Sublinear TF-IDF + Logistic Regression (`C=1.5`) | 80.82% | `0.79957` | #269 | **+45** | [`submission_tfidf_logistic.csv`](submission_tfidf_logistic.csv) |
 | **3** | [`exp04_catboost_text.py`](exp04_catboost_text.py) | CatBoost Native Text Gradient Boosted Trees | 79.81% | `0.77811` | — | — | [`submission_catboost.csv`](submission_catboost.csv) |
 | **4** | [`exp05_ensemble.py`](exp05_ensemble.py) | Multi-Model Blend (Logistic + NB + Ridge) | 81.11% | `0.79803` | — | — | [`submission_ensemble.csv`](submission_ensemble.csv) |
-| **5** | [`exp06_word_char_tfidf.py`](exp06_word_char_tfidf.py) | **Word (1,2) + Char (3,5) FeatureUnion + Logistic** | **81.51%** | **`0.80478`** | **#221** | **+48** | [`submission_word_char_tfidf.csv`](submission_word_char_tfidf.csv) |
+| **5** | [`exp06_word_char_tfidf.py`](exp06_word_char_tfidf.py) | Word (1,2) + Char (3,5) FeatureUnion + Logistic | 81.51% | **`0.80478`** | **#221** | **+48** | [`submission_word_char_tfidf.csv`](submission_word_char_tfidf.csv) |
+| **6** | [`exp07_dense_transformer_embeddings.py`](exp07_dense_transformer_embeddings.py) | Dense MiniLM Transformer + Sparse TF-IDF Hybrid | 83.06% | Ready | — | — | [`submission_hybrid_transformer.csv`](submission_hybrid_transformer.csv) |
+| **7** | [`exp08_production_ensemble.py`](exp08_production_ensemble.py) | **4-Way Multi-Modal Ensemble (Dense LR+MLP, Sparse, Joint)** | **83.17%** | **Ready for Tomorrow** | **Top 100 Target** | &mdash; | [`submission_top100_candidate.csv`](submission_top100_candidate.csv) |
 
-*(Total Leaderboard Gain: **+210 places**, moving from Rank #431 into the top 50% at Rank #221 entirely via mobile CPU).*
+*(Total Current Leaderboard Gain: **+210 places**, moving from Rank #431 into the top 50% at Rank #221; local 5-fold CV reaching **83.17%** targeting Rank < 100).*
 
 ---
 
