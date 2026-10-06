@@ -23,11 +23,13 @@ Each experiment establishes a disciplined step up in modeling complexity, evalua
 | **2** | [`exp03_tfidf_linear_models.py`](exp03_tfidf_linear_models.py) | Sublinear TF-IDF + Logistic Regression (`C=1.5`) | 80.82% | `0.79957` | #269 | **+45** | [`submission_tfidf_logistic.csv`](submission_tfidf_logistic.csv) |
 | **3** | [`exp04_catboost_text.py`](exp04_catboost_text.py) | CatBoost Native Text Gradient Boosted Trees | 79.81% | `0.77811` | — | — | [`submission_catboost.csv`](submission_catboost.csv) |
 | **4** | [`exp05_ensemble.py`](exp05_ensemble.py) | Multi-Model Blend (Logistic + NB + Ridge) | 81.11% | `0.79803` | — | — | [`submission_ensemble.csv`](submission_ensemble.csv) |
-| **5** | [`exp06_word_char_tfidf.py`](exp06_word_char_tfidf.py) | Word (1,2) + Char (3,5) FeatureUnion + Logistic | 81.51% | **`0.80478`** | **#221** | **+48** | [`submission_word_char_tfidf.csv`](submission_word_char_tfidf.csv) |
-| **6** | [`exp07_dense_transformer_embeddings.py`](exp07_dense_transformer_embeddings.py) | Dense MiniLM Transformer + Sparse TF-IDF Hybrid | 83.06% | Ready | — | — | [`submission_hybrid_transformer.csv`](submission_hybrid_transformer.csv) |
-| **7** | [`exp08_production_ensemble.py`](exp08_production_ensemble.py) | **4-Way Multi-Modal Ensemble (Dense LR+MLP, Sparse, Joint)** | **83.17%** | **Ready for Tomorrow** | **Top 100 Target** | &mdash; | [`submission_top100_candidate.csv`](submission_top100_candidate.csv) |
+| **5** | [`exp06_word_char_tfidf.py`](exp06_word_char_tfidf.py) | Word (1,2) + Char (3,5) FeatureUnion + Logistic | 81.51% | `0.80478` | #221 | **+48** | [`submission_word_char_tfidf.csv`](submission_word_char_tfidf.csv) |
+| **6** | [`exp07_dense_transformer_embeddings.py`](exp07_dense_transformer_embeddings.py) | Dense MiniLM Transformer + Sparse TF-IDF Hybrid | 83.06% | `0.82470` | #165 | **+56** | [`submission_top100_candidate.csv`](submission_top100_candidate.csv) |
+| **8** | [`exp08_production_ensemble.py`](exp08_production_ensemble.py) | 100% Pure ML Single-Backbone (Zero Overrides/Leakage) | 82.95% | `0.82408` | #166 | — | [`submission_pure_ml_hybrid.csv`](submission_pure_ml_hybrid.csv) |
+| **9** | [`exp10_final_submission.py`](exp10_final_submission.py) | Dual-Backbone 768-D Dense (MiniLM + BGE-Small) + Sparse | 83.42% | `0.82899` | #147 | **+19** | [`submission_dual_backbone_pure_ml.csv`](submission_dual_backbone_pure_ml.csv) |
+| **10** | [`exp10_final_submission.py`](exp10_final_submission.py) | **5-Model Multi-Loss Hybrid (Dual Dense + Ridge + LR + Joint)** | **83.71%** | **`0.83021`** | **#138** | **+9** | [`submission_dual_ridge_lr_hybrid.csv`](submission_dual_ridge_lr_hybrid.csv) |
 
-*(Total Current Leaderboard Gain: **+210 places**, moving from Rank #431 into the top 50% at Rank #221; local 5-fold CV reaching **83.17%** targeting Rank < 100).*
+*(Total Leaderboard Gain: **+293 places**, climbing from Rank #431 into the **Top 31.5% globally at Rank #138** with 100% Pure Machine Learning, just 0.00429 points away from the Top 100 cutoff `0.8345`).*
 
 ---
 
