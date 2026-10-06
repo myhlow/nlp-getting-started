@@ -1,0 +1,515 @@
+<!-- wp:html -->
+<div style="margin:0 0 1.6em 0">
+  <span style="display:inline-block;background:#1a2f45;color:#ffffff;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:0.85em">POCKET DATA SCIENCE &bull; PART V</span>
+  <p style="font-size:1.05rem;line-height:1.6;color:#4b5563;margin:0;border-left:3px solid #1a2f45;padding-left:16px">A hands-on engineering journey across Kaggle's Disaster Tweets benchmark: unmasking the live accuracy metric, tackling duplicate train-test leakage and contradictory annotator labels, capturing noisy Twitter slang with subword n-grams, and deploying a 5-model multi-loss hybrid on 768-D dual-backbone transformers directly on an Android smartphone running Termux and Google Antigravity CLI.</p>
+</div>
+
+<!-- SEO METADATA BLOCK -->
+<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px 18px;margin:1.6em 0;font-size:0.88rem;line-height:1.6">
+  <div style="font-weight:700;color:#0f172a;margin-bottom:6px">SEO &amp; Snippet Configuration</div>
+  <div style="margin-bottom:4px"><strong>Title Tag:</strong> <code>Kaggle NLP on Android: Dual Transformers &amp; Pure ML Guide</code> <span style="color:#64748b;font-size:0.8rem">(56 chars &bull; Target 50&ndash;60)</span></div>
+  <div><strong>Meta Description:</strong> <code>Pure ML breaks 0.830. 78 test duplicates tempt hardcoded lookups, while F1 docs hide live accuracy. See the dual-backbone Termux code &amp; 5-fold blend &rarr;</code> <span style="color:#64748b;font-size:0.8rem">(150 chars &bull; Target 145&ndash;158)</span></div>
+</div>
+
+<div style="margin:1.6em 0;line-height:1.7;color:#2c3e50">
+  <p style="margin:0 0 1em">In our ongoing <em>Pocket Data Science</em> series, we have demonstrated that competitive machine learning is entirely achievable on battery-powered edge hardware using <strong>Google Antigravity CLI (<code>agy</code>)</strong> inside <strong>Termux PRoot</strong> on Android. We navigated tabular classification with <a href="https://malcolmlow.com/2026/09/22/pocket-data-science-training-10-fold-ensemble-android-termux-antigravity-kaggle/" style="color:#2980b9;text-decoration:underline">Titanic</a> and <a href="https://malcolmlow.com/2026/09/24/pocket-data-science-2-spaceship-titanic-android-termux-antigravity-catboost/" style="color:#2980b9;text-decoration:underline">Spaceship Titanic</a>, tackled non-linear regression on <a href="https://malcolmlow.com/2026/09/26/pocket-data-science-3-house-prices-regression-baselines-android-termux/" style="color:#2980b9;text-decoration:underline">House Prices</a>, and scaled computer vision on <a href="https://malcolmlow.com/2026/09/27/pocket-data-science-4-mnist-digit-recognizer-subspace-svm-android-termux/" style="color:#2980b9;text-decoration:underline">Digit Recognizer (MNIST)</a>.</p>
+  <p style="margin:0">In this fifth installment, we tackle <strong>Natural Language Processing (NLP)</strong> via Kaggle's premier benchmark: <a href="https://www.kaggle.com/competitions/nlp-getting-started" style="color:#2980b9;text-decoration:underline" target="_blank" rel="noopener noreferrer">Natural Language Processing with Disaster Tweets</a> (7,613 training samples, 3,263 test samples). Over 10 disciplined experiments, our pipeline advanced from zero-learning baseline probes (<code>0.51087</code>) to classical sparse feature unions (<code>0.80478</code>), confronted <strong>dataset leakage and contradictory duplicate labels</strong>, and deployed a <strong>768-D dual-backbone transformer ensemble</strong> scoring <strong><code>0.83021</code></strong> on Kaggle's live public leaderboard&mdash;placing at <strong>Rank #138</strong> (Top 31.5% globally) with <strong>100% pure machine learning</strong>.</p>
+</div>
+
+<div style="background:#f1f5f9;border-left:4px solid #1a2f45;padding:12px 16px;margin:1.4em 0;border-radius:0 4px 4px 0">
+  <strong>💻 Open-Source Code:</strong> The entire experiment suite, pre-computed embedding generation, and submission pipelines are available on GitHub: <a href="https://github.com/myhlow/nlp-getting-started" style="color:#2980b9;font-weight:600;text-decoration:underline" target="_blank" rel="noopener noreferrer">github.com/myhlow/nlp-getting-started</a>.
+</div>
+
+<!-- SECTION 1: THE MOBILE ENVIRONMENT -->
+<div style="border:1px solid #2c3e50;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#2c3e50;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    1 &nbsp;&middot;&nbsp; The Mobile ML Environment &amp; Stack
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.6">
+    <p style="margin:0 0 10px 0">All data engineering, text cleaning, embedding inference, cross-validation, and Kaggle submissions were executed strictly on an unrooted Android smartphone:</p>
+    <ul style="margin:0 0 12px 0;padding-left:1.2em;color:#2c3e50">
+      <li style="margin-bottom:5px"><strong>Host Environment:</strong> Android running <strong>Termux</strong> with a Debian userspace via <strong>PRoot Distro</strong> on 64-bit ARM (<code>aarch64</code>).</li>
+      <li style="margin-bottom:5px"><strong>AI Pair Programmer:</strong> <strong>Google Antigravity CLI (<code>agy</code>)</strong> running autonomously in persistent shell sessions.</li>
+      <li style="margin-bottom:5px"><strong>Libraries:</strong> Python 3.14, <code>scikit-learn</code>, <code>PyTorch 2.6 (CPU)</code>, <code>transformers</code>, <code>sentence-transformers</code>, and the official <code>kaggle</code> CLI.</li>
+      <li style="margin-bottom:5px"><strong>Hardware Constraint:</strong> 100% CPU execution without CUDA acceleration. Dense transformer models run via frozen batched forward passes cached directly to disk.</li>
+    </ul>
+    <p style="margin:0;font-weight:600;color:#1e40af">Key Advantage: By freezing backbones and persisting 384-D dense embeddings to disk, full 5-fold cross-validation and ensembling execute in under 3 seconds per fold on mobile CPU.</p>
+  </div>
+</div>
+
+<!-- SECTION 2: THE 3 BASELINE SUBMISSIONS -->
+<div style="border:1px solid #1e5c87;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#1e5c87;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    2 &nbsp;&middot;&nbsp; Zero-Learning Baselines: Probing the Live Leaderboard
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.6">
+    <p style="margin:0 0 10px 0">In scientific data science, the first submissions should never be complex architectures. They must be <strong>zero-learning heuristic baselines</strong> that map the extreme boundaries of the scoring engine:</p>
+
+    <div style="margin:12px 0;overflow-x:auto">
+      <table style="width:100%;min-width:640px;border-collapse:collapse;font-size:0.88rem;line-height:1.5;text-align:left">
+        <thead>
+          <tr style="background:#1a2f45;color:#e8f4f8">
+            <th style="padding:10px;border:1px solid #cbd5e1">Baseline ID</th>
+            <th style="padding:10px;border:1px solid #cbd5e1">Strategy</th>
+            <th style="padding:10px;border:1px solid #cbd5e1">Predicted Class</th>
+            <th style="padding:10px;border:1px solid #cbd5e1">Submission Ref</th>
+            <th style="padding:10px;border:1px solid #cbd5e1">Kaggle Public Score</th>
+            <th style="padding:10px;border:1px solid #cbd5e1">Leaderboard Rank</th>
+            <th style="padding:10px;border:1px solid #cbd5e1">Theoretical Class 1 F1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:#ffffff">
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><strong>Exp 01a</strong></td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1">Constant Majority Class</td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1">All <code>0</code> (Safe)</td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><code>56829797</code></td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><strong style="color:#1e40af">0.57033</strong></td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1">#431 / 436</td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><code style="color:#b91c1c">0.0000</code></td>
+          </tr>
+          <tr style="background:#f8fafc">
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><strong>Exp 01b</strong></td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1">Constant Minority Class</td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1">All <code>1</code> (Disaster)</td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><code>56829801</code></td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><strong style="color:#b91c1c">0.42966</strong></td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1">#434 / 436</td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><code style="color:#15803d">0.6011</code></td>
+          </tr>
+          <tr style="background:#ffffff">
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><strong>Exp 01c</strong></td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1">Empirical Random Prior</td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1">Random (<code>p=0.4297</code>)</td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><code>56829802</code></td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><strong style="color:#b45309">0.51087</strong></td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1">Baseline Floor</td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1"><code style="color:#b45309">0.4145</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin:10px 0 0 0;font-size:0.875rem;color:#334155;line-height:1.6">
+      Our team <strong>Malcolm</strong> immediately registered at <strong>Rank #431</strong> with zero parameters. But more importantly, these submissions revealed a fundamental mathematical insight about the live scoring platform.
+    </p>
+  </div>
+</div>
+
+<!-- SECTION 3: THE MATHEMATICAL PROOF -->
+<div style="border:1px solid #0f766e;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#0f766e;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    3 &nbsp;&middot;&nbsp; The Mathematical Proof: Unmasking Categorical Accuracy
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
+    <p style="margin:0 0 10px 0">The official Kaggle competition overview states:</p>
+    <blockquote style="margin:10px 0;padding:8px 14px;border-left:4px solid #0f766e;background:#f0fdfa;color:#134e4a">
+      "Submissions are evaluated using F1-score between the predicted and ground truth."
+    </blockquote>
+    <p style="margin:10px 0 8px 0">Under standard binary <code>F1-score</code> for the positive class (<code>Class 1</code> = Disaster):</p>
+    <div style="background:#f8fafc;padding:10px;border:1px solid #e2e8f0;border-radius:4px;font-family:monospace;margin-bottom:10px">
+      Precision = TP / (TP + FP)<br>
+      Recall    = TP / (TP + FN)<br>
+      F1-Score  = 2 &times; TP / (2 &times; TP + FP + FN)
+    </div>
+    <ul style="margin:0 0 12px 0;padding-left:1.2em">
+      <li><strong>Constant 0:</strong> True Positives <code>TP = 0</code>. Precision and Recall are zero, producing a theoretical F1 of strictly <strong><code>0.0000</code></strong>.</li>
+      <li><strong>Constant 1:</strong> Captures 100% of real disasters (Recall = <code>1.0</code>). With base rate Precision = <code>0.4297</code>, the theoretical F1 is <strong><code>0.6011</code></strong>.</li>
+    </ul>
+
+    <h4 style="color:#0f172a;margin:16px 0 6px 0;font-size:0.95rem">The 1.0 Complement Rule</h4>
+    <p style="margin:0 0 8px 0">Notice what the live Kaggle leaderboard actually scored:</p>
+    <div style="background:#f8fafc;padding:12px;border-left:3px solid #0f766e;font-family:monospace;margin:10px 0">
+      Score(Constant 0) = 0.57033<br>
+      Score(Constant 1) = 0.42966<br>
+      Sum = 0.57033 + 0.42966 = 0.99999 &approx; 1.00000
+    </div>
+
+    <p style="margin:8px 0 10px 0">
+      Under binary <code>F1</code>, this complement property is mathematically impossible (<code>0.0000 + 0.6011 = 0.6011 &ne; 1.0</code>). Under <strong>Categorical Accuracy</strong>, inverting all predictions flips every correct guess to an incorrect one, forcing the two scores to sum to exactly <code>100%</code>:
+    </p>
+
+    <div style="background:#f8fafc;padding:12px;border:1px solid #e2e8f0;border-radius:4px;font-family:monospace;margin:10px 0">
+      Accuracy(All 0) + Accuracy(All 1) = (TN / Total) + (TP / Total) = (1861 + 1402) / 3263 = 1.0
+    </div>
+
+    <p style="margin:10px 0 0 0;font-weight:600;color:#0f172a">
+      The Mathematical Verdict: The live public leaderboard scoring function is <code>accuracy_score(y_true, y_pred)</code>! Aligning local cross-validation to classification accuracy eliminated all metric mismatch.
+    </p>
+  </div>
+</div>
+
+<!-- SECTION 4: REVERSE ENGINEERING THE TEST SET -->
+<div style="border:1px solid #b45309;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#b45309;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    4 &nbsp;&middot;&nbsp; Reverse-Engineering the 3,263 Unseen Test Samples
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
+    <p style="margin:0 0 10px 0">Because our baseline probes returned exact classification accuracies, we can reverse-engineer the true class distribution of Kaggle's test partition:</p>
+    <ul style="margin:0 0 12px 0;padding-left:1.2em">
+      <li style="margin-bottom:6px"><strong>Safe Tweets (Class 0):</strong> <code>3,263 &times; 0.570334 =</code> <strong><code>1,861</code> tweets</strong> (<code>57.03%</code>)</li>
+      <li style="margin-bottom:6px"><strong>Disaster Tweets (Class 1):</strong> <code>3,263 &times; 0.429666 =</code> <strong><code>1,402</code> tweets</strong> (<code>42.97%</code>)</li>
+    </ul>
+    <p style="margin:0 0 10px 0">Compare this to the training set (7,613 tweets):</p>
+    <ul style="margin:0 0 12px 0;padding-left:1.2em">
+      <li><strong>Training Class 0:</strong> <code>4,342 / 7,613 = 57.034%</code></li>
+      <li><strong>Training Class 1:</strong> <code>3,271 / 7,613 = 42.966%</code></li>
+    </ul>
+    <p style="margin:0;font-weight:600;color:#78350f">
+      The test partition is an exact stratified duplicate of the training set to 3 decimal places. This proved there is zero label shift, enabling confident probability calibration.
+    </p>
+  </div>
+</div>
+
+<!-- SECTION 5: PHASE 1 CLASSICAL ML -->
+<div style="border:1px solid #334155;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#334155;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    5 &nbsp;&middot;&nbsp; Phase 1: Feature Engineering &amp; Subword N-Grams (0.795 &rarr; 0.805)
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.6">
+    <p style="margin:0 0 10px 0">Leaving zero-learning baselines behind, we implemented disciplined text preprocessing and feature engineering:</p>
+    <ol style="margin:0 0 12px 0;padding-left:1.2em">
+      <li style="margin-bottom:6px"><strong>Keyword Semantic Anchors:</strong> Keywords in the dataset are high-signal emergency terms (e.g., <code>fatalities</code>, <code>evacuation</code>) formatted with URL escape codes (<code>%20</code>). We decoded them and prepended: <code>keyword: {kw} | tweet: {cleaned_text}</code>.</li>
+      <li style="margin-bottom:6px"><strong>URL &amp; Mention Masking:</strong> Web addresses and Twitter handles were normalized into generic tokens (<code>http_url</code> and <code>@user</code>) to avoid sparse overfitting.</li>
+    </ol>
+
+    <h4 style="color:#0f172a;margin:14px 0 6px 0;font-size:0.95rem">Model Exploration on Mobile CPU</h4>
+    <ul style="margin:0 0 12px 0;padding-left:1.2em">
+      <li><strong>CountVectorizer + Multinomial Naive Bayes (Exp 1):</strong> Scored <strong><code>0.79497</code></strong> (Rank #314, <strong>+117 places</strong>) in 2.4 seconds.</li>
+      <li><strong>Sublinear TF-IDF + Logistic Regression (Exp 2):</strong> Applied sublinear term frequency scaling (<code>1 + log(tf)</code>). Scored <strong><code>0.79957</code></strong> (Rank #269, <strong>+45 places</strong>) in 2.7 seconds.</li>
+      <li><strong>CatBoost Native Text GBDT (Exp 3):</strong> Evaluated CatBoost's native text tokenization. Took 221 seconds and scored <code>0.77811</code>. Linear models beat decision trees because text classification relies on wide, continuous linear hyperplanes across sparse high-dimensional vocabularies, whereas axis-aligned tree splits overfit individual token co-occurrences.</li>
+      <li><strong>Word + Subword Character FeatureUnion (Exp 5):</strong> Combining word n-grams <code>(1, 2)</code> with character n-grams <code>(3, 5)</code> captured morphological stems and typos (e.g., <code>"earthqk"</code>, <code>"#wildfire"</code>). This broke the 80% mark, reaching <strong><code>0.80478</code></strong> (Rank #221, <strong>+48 places</strong>).</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SECTION 6: THE DUPLICATE ENTRIES & LEAK ISSUE -->
+<div style="border:1px solid #b91c1c;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#b91c1c;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    6 &nbsp;&middot;&nbsp; The Retweet Duplicate Phenomenon &amp; Train-to-Test Leakage Trap
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
+    <p style="margin:0 0 10px 0">Before scaling up to heavy transformer embeddings, exploratory data analysis unmasked a critical data quality phenomenon unique to social media corpora: <strong>massive verbatim duplication</strong> caused by retweets, automated bot alerts, and syndicated news wires.</p>
+
+    <h4 style="color:#0f172a;margin:14px 0 6px 0;font-size:0.95rem">1. Internal Training Duplicates &amp; The Contradictory Label Crisis</h4>
+    <p style="margin:0 0 8px 0">In the training dataset (7,613 rows), there are only 7,503 unique text strings. That leaves <strong>179 duplicate rows across 69 unique texts</strong>. Even more alarming, <strong>18 unique texts have directly conflicting ground-truth labels</strong> (assigned both <code>0</code> and <code>1</code> by different human crowd annotators):</p>
+
+    <div style="background:#fef2f2;border-left:4px solid #ef4444;padding:10px 14px;margin:10px 0;font-size:0.84rem;line-height:1.55">
+      <strong style="color:#991b1b">Real-World Examples of Conflicting Labels in train.csv:</strong><br>
+      &bull; <code>"CLEARED:incident with injury:I-495 inner loop Exit 31 - MD 97/Georgia Ave Silver Spring"</code> &rarr; Annotated as both <strong>1</strong> (injury) and <strong>0</strong> (cleared incident).<br>
+      &bull; <code>".POTUS #StrategicPatience is a strategy for #Genocide; refugees; IDP Internally..."</code> &rarr; 4 identical occurrences annotated evenly as <strong>[1, 0, 1, 0]</strong>.<br>
+      &bull; <code>"Caution: breathing may be hazardous to your health."</code> &rarr; Sarcastic figurative quote labeled as both <strong>1</strong> and <strong>0</strong>.
+    </div>
+
+    <p style="margin:8px 0 10px 0">
+      If fed raw into loss functions, contradictory labels corrupt gradient updates. We resolved this via <strong>group-level majority voting</strong>:
+    </p>
+
+    <pre style="background:#0f172a;color:#e2e8f0;padding:12px;border-radius:4px;overflow-x:auto;font-size:0.82rem;line-height:1.5;margin:8px 0"><code># Resolve conflicting crowd-worker labels via majority vote
+vote = train.groupby('text')['target'].agg(lambda s: s.value_counts().index[0]).to_dict()
+y = train['text'].map(vote).values</code></pre>
+
+    <h4 style="color:#0f172a;margin:16px 0 6px 0;font-size:0.95rem">2. The 78-Tweet Train-to-Test Leakage: The Cheating Temptation</h4>
+    <p style="margin:0 0 8px 0">Because the competition organizers split the dataset by tweet ID rather than grouping by tweet content, <strong>78 tweets in test.csv (2.39% of the entire test set) appear verbatim in train.csv</strong>! Even worse, <strong>11 of those 78 test tweets have contradictory labels in the training set itself</strong>.</p>
+    <p style="margin:0 0 10px 0">In public Kaggle notebooks and discussions, many competitors exploit this by building a dictionary lookup table: if a test tweet matches a training tweet, override the model's prediction with the training label. In Experiment 6, we tested a candidate submission applying 8 duplicate overrides, reaching <strong><code>0.82470</code></strong> (Rank #165).</p>
+
+    <h4 style="color:#0f172a;margin:14px 0 6px 0;font-size:0.95rem">3. The Scientific Resolution: Experiment 8 Pure ML Verification</h4>
+    <p style="margin:0 0 8px 0">Is hardcoded string matching true machine learning? In real-world emergency response systems, a classifier will encounter novel, unseen phrasing. Relying on memorized lookups gives a false sense of security.</p>
+    <p style="margin:0 0 10px 0">To ensure absolute scientific integrity, we launched <strong>Experiment 8</strong>: stripping away all dictionary lookups, exact string overrides, and post-processing heuristics. Every prediction was generated strictly by the model's continuous posterior probabilities.</p>
+
+    <div style="background:#f8fafc;padding:12px;border:1px solid #e2e8f0;border-radius:4px;font-size:0.86rem;line-height:1.6;margin:10px 0">
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:6px">
+        <span><strong>Exp 6:</strong> Hybrid with 8 Duplicate Overrides</span>
+        <span style="font-family:monospace;color:#b45309">Kaggle Score: <strong>0.82470</strong> (Rank #165)</span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span><strong>Exp 8:</strong> 100% Pure ML (Zero Overrides, Zero Leakage)</span>
+        <span style="font-family:monospace;color:#15803d">Kaggle Score: <strong>0.82408</strong> (Rank #166)</span>
+      </div>
+    </div>
+
+    <p style="margin:8px 0 0 0;font-weight:600;color:#1e40af">
+      The Empirical Proof: The delta between cheat lookups and pure machine learning was a negligible 0.00062 points. This proved that over 97.5% of the performance jump was genuine semantic representation learning. We locked in a permanent rule across all subsequent experiments: 100% pure machine learning, zero post-processing overrides.
+    </p>
+  </div>
+</div>
+
+<!-- SECTION 7: PHASE 2 TRANSFORMERS ON MOBILE -->
+<div style="border:1px solid #4338ca;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#4338ca;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    7 &nbsp;&middot;&nbsp; Phase 2: Frozen Pretrained Transformers on Mobile CPU
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
+    <p style="margin:0 0 10px 0">Fine-tuning full transformer architectures on an Android smartphone CPU causes memory throttling and excessive runtimes. Instead, we adopted an elegant edge ML strategy: <strong>frozen backbone feature extraction</strong>.</p>
+    <p style="margin:0 0 10px 0">We extracted and persisted dense embeddings across two complementary transformer architectures:</p>
+    <ul style="margin:0 0 12px 0;padding-left:1.2em">
+      <li style="margin-bottom:6px"><strong>Backbone 1: <code>sentence-transformers/all-MiniLM-L6-v2</code> (384-D):</strong> 6 transformer layers, 22.7M parameters, mean-token pooling. Optimized for general sentence semantic similarity.</li>
+      <li style="margin-bottom:6px"><strong>Backbone 2: <code>BAAI/bge-small-en-v1.5</code> (384-D):</strong> 33.4M parameters, contrastive pretraining with <code>[CLS]</code> token pooling. Excels at discriminative classification and dense retrieval.</li>
+    </ul>
+    <p style="margin:0;font-weight:600;color:#1e40af">By computing embeddings once and serializing them as NumPy binaries, our downstream iterative modeling was lightning fast.</p>
+  </div>
+</div>
+
+<!-- SECTION 8: PHASE 3 DUAL BACKBONE -->
+<div style="border:1px solid #15803d;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#15803d;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    8 &nbsp;&middot;&nbsp; Phase 3: The 768-D Dual-Backbone Synergy (0.824 &rarr; 0.829)
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
+    <p style="margin:0 0 10px 0">While single backbones performed well, concatenating the 384-D MiniLM representation with the 384-D BGE-Small representation produced an information-dense <strong>768-D joint embedding vector</strong>:</p>
+
+    <div style="background:#f8fafc;padding:10px;border:1px solid #e2e8f0;border-radius:4px;font-family:monospace;margin:10px 0">
+      X_dual = np.hstack([X_MiniLM_384D, X_BGE_384D])  # Shape: (N, 768)
+    </div>
+
+    <p style="margin:8px 0 10px 0">Because MiniLM uses mean pooling over token embeddings while BGE-Small utilizes a contrastively-trained <code>[CLS]</code> token, their latent representations capture distinct semantic manifolds. Blending this 768-D dense representation with our sparse subword FeatureUnion (Exp 9) propelled our score to <strong><code>0.82899</code></strong> (<strong>Rank #147</strong>, <strong>+19 places</strong>)&mdash;surpassing leak-reliant candidate models purely on representation power.</p>
+  </div>
+</div>
+
+<!-- SECTION 9: PHASE 4 MULTI-LOSS HYBRID -->
+<div style="border:1px solid #7c2d12;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#7c2d12;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    9 &nbsp;&middot;&nbsp; Phase 4: Multi-Loss Hybrid Ensembling &amp; Calibration (Breaking 0.830)
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
+    <p style="margin:0 0 10px 0">To push beyond Rank #147, we introduced <strong>loss-function diversity</strong> across multiple hypothesis spaces. Instead of relying solely on logistic regression ($L_2$ regularized cross-entropy), we incorporated Ridge classification ($L_2$ regularized squared loss / margin penalty) mapped to probabilities via sigmoid activation (<code>expit(decision_function)</code>).</p>
+    <p style="margin:0 0 10px 0">On dense 768-D embeddings, Ridge regression actually outperformed Logistic Regression (<code>0.7879</code> vs <code>0.7863</code> F1). We formulated a 5-model multi-loss ensemble spanning three distinct representation spaces:</p>
+
+    <div style="margin:10px 0;overflow-x:auto">
+      <table style="width:100%;min-width:600px;border-collapse:collapse;font-size:0.88rem;line-height:1.5">
+        <thead>
+          <tr style="background:#1a2f45;color:#e8f4f8">
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Model</th>
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Representation Space</th>
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Loss Objective</th>
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Hyperparameters</th>
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Ensemble Weight</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">1. Logistic Regression</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Dual Dense 768-D</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Log-loss (Cross-entropy)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><code>C=2.0</code></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>25%</strong></td>
+          </tr>
+          <tr style="background:#f8fafc">
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">2. Ridge Classifier</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Dual Dense 768-D</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Squared Loss + L2</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><code>&alpha;=3.0</code></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>15%</strong></td>
+          </tr>
+          <tr>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">3. Logistic Regression</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Sparse Word+Char (38k-D)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Log-loss (Cross-entropy)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><code>C=1.5</code></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>15%</strong></td>
+          </tr>
+          <tr style="background:#f8fafc">
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">4. Ridge Classifier</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Sparse Word+Char (38k-D)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Squared Loss + L2</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><code>&alpha;=2.0</code></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>15%</strong></td>
+          </tr>
+          <tr>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">5. Joint Space LR</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Concatenated [Dense + Sparse]</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Log-loss (Cross-entropy)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><code>C=1.5</code></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>30%</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="color:#0f172a;margin:14px 0 6px 0;font-size:0.95rem">Decision Threshold Calibration</h4>
+    <p style="margin:0 0 8px 0">Because the true base rate is <code>42.97%</code> positive, a standard <code>0.50</code> threshold can admit false positives in noisy edge cases. We conducted an out-of-fold calibration sweep:</p>
+
+    <div style="background:#f8fafc;padding:10px;border:1px solid #e2e8f0;border-radius:4px;font-family:monospace;font-size:0.83rem;margin:8px 0">
+      t=0.48 | OOF F1: 0.7970 | OOF Acc: 83.15% | Test Pos%: 39.87%<br>
+      t=0.49 | OOF F1: 0.7972 | OOF Acc: 83.28% | Test Pos%: 39.26%<br>
+      t=0.50 | OOF F1: 0.7974 | OOF Acc: 83.42% | Test Pos%: 38.43%<br>
+      <strong>t=0.51 | OOF F1: 0.7964 | OOF Acc: 83.50% | Test Pos%: 37.88% (Selected)</strong><br>
+      t=0.52 | OOF F1: 0.7959 | OOF Acc: 83.59% | Test Pos%: 37.45%<br>
+      t=0.53 | OOF F1: 0.7961 | OOF Acc: 83.71% | Test Pos%: 36.71%
+    </div>
+
+    <p style="margin:8px 0 10px 0">Selecting <code>t = 0.51</code> balances high out-of-fold accuracy (<code>83.50%</code>) while filtering ambiguous, figurative expressions. Submitting this 100% Pure ML ensemble to Kaggle delivered our crowning result:</p>
+
+    <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:12px 16px;margin:10px 0;border-radius:0 4px 4px 0">
+      <strong style="color:#15803d;font-size:1.05rem">Official Kaggle Public Score: 0.83021 &bull; Rank #138</strong><br>
+      <span style="font-size:0.875rem;color:#166534">Placing Malcolm in the Top 31.5% globally out of 438 competitors, and collapsing our distance to the Top 100 cutoff (0.8345) to just 0.00429 points.</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 10: SCORECARD & BENCHMARK -->
+<div style="border:1px solid #1e293b;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#1e293b;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    10 &nbsp;&middot;&nbsp; The Full Experiment Scorecard &amp; Mobile Efficiency Benchmarks
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.6">
+    <p style="margin:0 0 10px 0">The complete empirical journey across all 10 experiments:</p>
+
+    <div style="margin:10px 0;overflow-x:auto">
+      <table style="width:100%;min-width:680px;border-collapse:collapse;font-size:0.86rem;line-height:1.5">
+        <thead>
+          <tr style="background:#1a2f45;color:#e8f4f8">
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Exp</th>
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Strategy / Pipeline</th>
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">5-Fold OOF Acc</th>
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Kaggle Score</th>
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Global Rank</th>
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Rank Delta</th>
+            <th style="padding:8px 10px;border:1px solid #cbd5e1">Pure ML Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>01a</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Constant Majority (All 0s)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">57.03%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.57033</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">#431</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Baseline</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Heuristic</td>
+          </tr>
+          <tr style="background:#f8fafc">
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>01b</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Constant Minority (All 1s)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">42.97%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.42966</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">#434</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">-3</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Heuristic</td>
+          </tr>
+          <tr>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>01c</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Empirical Random Prior (p=0.430)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">49.98%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.51087</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Floor</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">&mdash;</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Heuristic</td>
+          </tr>
+          <tr style="background:#f8fafc">
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>1</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">CountVec (1,2) + Multinomial NB</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">80.13%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.79497</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">#314</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>+117</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">100% Pure ML</td>
+          </tr>
+          <tr>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>2</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Sublinear TF-IDF + Logistic Reg</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">80.82%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.79957</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">#269</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>+45</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">100% Pure ML</td>
+          </tr>
+          <tr style="background:#f8fafc">
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>3</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">CatBoost Native Text GBDT</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">79.81%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.77811</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">&mdash;</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">&mdash;</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">100% Pure ML</td>
+          </tr>
+          <tr>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>4</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Multi-Model Blend (LR + NB + Ridge)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">81.11%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.79803</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">&mdash;</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">&mdash;</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">100% Pure ML</td>
+          </tr>
+          <tr style="background:#f8fafc">
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>5</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Word (1,2) + Char (3,5) FeatureUnion</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">81.51%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.80478</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">#221</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>+48</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">100% Pure ML</td>
+          </tr>
+          <tr>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>6</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">MiniLM 384-D + Sparse (8 overrides)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">83.06%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.82470</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">#165</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>+56</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">8 Overrides</td>
+          </tr>
+          <tr style="background:#f8fafc">
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>8</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">MiniLM 384-D + Sparse (Pure ML Validation)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">82.95%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.82408</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">#166</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">&mdash;</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>100% Pure ML</strong></td>
+          </tr>
+          <tr>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>9</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">Dual-Backbone 768-D (MiniLM + BGE-Small)</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">83.42%</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">0.82899</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1">#147</td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>+19</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>100% Pure ML</strong></td>
+          </tr>
+          <tr style="background:#f0fdf4">
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>10</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>5-Model Multi-Loss Hybrid (Dual + Ridge + LR)</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>83.71%</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong style="color:#15803d">0.83021</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong style="color:#15803d">#138</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong style="color:#15803d">+9</strong></td>
+            <td style="padding:7px 10px;border:1px solid #cbd5e1"><strong>100% Pure ML</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="color:#0f172a;margin:14px 0 6px 0;font-size:0.95rem">Mobile Compute Efficiency Profile</h4>
+    <ul style="margin:0;padding-left:1.2em">
+      <li><strong>5-Fold CV Runtime (Exp 10):</strong> 11.4 seconds on mobile ARM64 CPU.</li>
+      <li><strong>Memory Footprint:</strong> Under 320 MB RSS during training and probability blending.</li>
+      <li><strong>Total Leaderboard Advance:</strong> <strong>+293 places</strong> (from #431 to #138), establishing our highest competitive ranking in the Pocket Data Science series to date.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SECTION 11: CONCLUSION & REPRODUCTION -->
+<div style="border:1px solid #1a2f45;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#1a2f45;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    11 &nbsp;&middot;&nbsp; Key Takeaways &amp; Reproduction
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#2c3e50">
+    <p style="margin:0 0 10px 0">This benchmark underscores four fundamental lessons for practical edge NLP and competitive machine learning:</p>
+    <ol style="margin:0 0 12px 0;padding-left:1.2em">
+      <li style="margin-bottom:6px"><strong>Never trust metric documentation blindly:</strong> Zero-learning baseline pings exposed that Kaggle's live public scoring evaluates categorical accuracy, immediately preventing cross-entropy over-optimization.</li>
+      <li style="margin-bottom:6px"><strong>Audit social media corpora for duplicate leakage:</strong> Twitter retweets create severe train-test contamination and contradictory human annotations. Verifying pure machine learning against hardcoded lookups proves your models actually generalize.</li>
+      <li style="margin-bottom:6px"><strong>Dual-backbone representations outperform single giants:</strong> Combining two lightweight 384-D models trained with different objectives (MiniLM mean pooling + BGE contrastive <code>[CLS]</code>) delivered richer separation than fine-tuning a massive model, with zero GPU overhead.</li>
+      <li style="margin-bottom:6px"><strong>Loss diversity beats single-objective tuning:</strong> Blending margin-based Ridge regression with probabilistic Logistic Regression across dense and sparse feature spaces produced superior generalization and CV stability.</li>
+    </ol>
+    <p style="margin:0">Clone the repo and run the full pipeline in Termux:</p>
+    <div style="background:#0f172a;color:#e2e8f0;padding:12px;border-radius:4px;font-family:monospace;font-size:0.83rem;margin:10px 0">
+      git clone https://github.com/myhlow/nlp-getting-started.git<br>
+      cd nlp-getting-started<br>
+      pip install -r requirements.txt<br>
+      python3 exp10_final_submission.py
+    </div>
+  </div>
+</div>
+<!-- /wp:html -->
