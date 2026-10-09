@@ -99,7 +99,7 @@ html_content = """<!-- wp:html -->
     </div>
 
     <p style="margin:10px 0 0 0;font-size:0.875rem;color:#334155;line-height:1.6">
-      Our team <strong>Malcolm</strong> immediately registered at <strong>Rank #431</strong> with zero parameters. But more importantly, these submissions revealed a fundamental mathematical insight about the live scoring platform.
+      Our initial baseline submissions immediately registered at <strong>Rank #431</strong> with zero parameters. But more importantly, these submissions revealed a fundamental mathematical insight about the live scoring platform.
     </p>
   </div>
 </div>
@@ -350,7 +350,7 @@ y = train['text'].map(vote).values</code></pre>
 
     <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:12px 16px;margin:10px 0;border-radius:0 4px 4px 0">
       <strong style="color:#15803d;font-size:1.05rem">Official Kaggle Public Score: 0.83021 &bull; Rank #138</strong><br>
-      <span style="font-size:0.875rem;color:#166534">Placing Malcolm in the Top 31.5% globally out of 438 competitors, and collapsing our distance to the Top 100 cutoff (0.8345) to just 0.00429 points.</span>
+      <span style="font-size:0.875rem;color:#166534">Reaching Rank #138 in the Top 31.5% globally out of 438 competitors, and collapsing the distance to the Top 100 cutoff (0.8345) to just 0.00429 points.</span>
     </div>
   </div>
 </div>

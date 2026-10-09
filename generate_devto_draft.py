@@ -193,7 +193,7 @@ t=0.53 | OOF F1: 0.7961 | OOF Acc: 83.71% | Test Pos%: 36.71%
 Selecting `t = 0.51` balances high out-of-fold accuracy (`83.50%`) while filtering ambiguous, figurative expressions. Submitting this 100% Pure ML ensemble to Kaggle delivered our crowning result:
 
 **Official Kaggle Public Score: `0.83021` • Rank #138**  
-*(Placing Malcolm in the Top 31.5% globally out of 438 competitors, and collapsing our distance to the Top 100 cutoff `0.8345` to just 0.00429 points).*
+*(Reaching Rank #138 in the Top 31.5% globally out of 438 competitors, and collapsing the distance to the Top 100 cutoff `0.8345` to just 0.00429 points).*
 
 ---
 
