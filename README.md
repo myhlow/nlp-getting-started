@@ -10,6 +10,23 @@ A complete, systematic natural language processing study for the [Kaggle NLP wit
 
 ---
 
+## 📋 The Kaggle Challenge & Dataset Specification
+
+The [Natural Language Processing with Disaster Tweets](https://www.kaggle.com/competitions/nlp-getting-started) challenge evaluates automated classification of microblog posts into authentic crises vs metaphorical or colloquial banter.
+
+* **Corpus Partitions:** 10,876 crowd-annotated tweets split into `train.csv` (7,613 samples with labels) and `test.csv` (3,263 samples for public leaderboard evaluation).
+* **Input Features:**
+  * `id` *(Integer &bull; Primary Key)*: Unique tweet identifier.
+  * `text` *(String &bull; Primary Feature &bull; 100% Complete)*: Raw tweet narrative text containing hashtags, mentions, URLs, and slang.
+  * `keyword` *(Categorical String &bull; 0.80% Null)*: Emergency topic keyword across 221 unique classes (missing in 61 train, 26 test).
+  * `location` *(Unstructured String &bull; ~33.5% Null)*: User-declared location profile (missing in 2,533 train, 1,105 test).
+* **Target Objective (`target`):**
+  * `1` (Disaster Event): 3,271 tweets (42.97%)
+  * `0` (Non-Disaster Event): 4,342 tweets (57.03%)
+  * *Zero distribution shift:* Train prior (57.03% / 42.97%) matches test ground truth reverse-engineered from baseline probes.
+
+---
+
 ## 🏆 The Empirical Experiment Progression
 
 Each experiment establishes a disciplined step up in modeling complexity, evaluated with **Stratified 5-Fold Cross-Validation** and scored on Kaggle's live public leaderboard:
