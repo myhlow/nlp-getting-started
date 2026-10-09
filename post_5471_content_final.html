@@ -33,15 +33,51 @@
   </div>
 </div>
 
-<!-- SECTION 2: SCORECARD & BENCHMARK -->
+<!-- SECTION 2: SCORECARD &amp; BENCHMARK -->
+<!-- SECTION 2: THE KAGGLE CHALLENGE -->
+<div style="border:1px solid #1a2f45;border-radius:4px;margin:1.6em 0;overflow:hidden">
+  <div style="background:#1a2f45;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
+    2 &nbsp;&middot;&nbsp; The Kaggle Challenge: Problem Framing, Input Features &amp; Target Objective
+  </div>
+  <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#2c3e50">
+    <p style="margin:0 0 10px 0;text-align:justify;text-justify:inter-word">The Kaggle competition <a href="https://www.kaggle.com/competitions/nlp-getting-started" style="color:#2980b9;text-decoration:underline" target="_blank" rel="noopener noreferrer">Natural Language Processing with Disaster Tweets</a> evaluates an essential text classification task: automatically identifying whether a given microblog post announces an authentic real-world emergency (such as a wildfire, earthquake, or train derailment) or simply employs metaphorical, dramatic, or colloquial language in everyday conversation.</p>
+    
+    <p style="margin:0 0 12px 0;text-align:justify;text-justify:inter-word">Microblogging data presents unique NLP hurdles: colloquial expressions (&ldquo;that concert was the bomb&rdquo;, &ldquo;my inbox exploded&rdquo;, &ldquo;I am on fire today&rdquo;) share identical keywords with literal crises. The model must learn syntactic context, lexical co-occurrence, and semantic representation to separate figurative hyperbole from genuine distress signals.</p>
+
+    <h4 style="color:#0f172a;margin:14px 0 8px 0;font-size:0.95rem">The Dataset Architecture &amp; Partitions</h4>
+    <p style="margin:0 0 10px 0;text-align:justify;text-justify:inter-word">The corpus contains <strong>10,876 crowd-annotated tweets</strong> partitioned into two disjoint subsets:</p>
+    <ul style="margin:0 0 14px 0;padding-left:1.2em;color:#2c3e50">
+      <li style="margin-bottom:6px;text-align:justify;text-justify:inter-word"><strong>Training Set (<code>train.csv</code>):</strong> <strong>7,613 tweets</strong> with provided ground-truth target labels. Used for model development, tokenization, feature union construction, and out-of-fold cross-validation.</li>
+      <li style="margin-bottom:6px;text-align:justify;text-justify:inter-word"><strong>Test Set (<code>test.csv</code>):</strong> <strong>3,263 tweets</strong> without labels. Model predictions on this set are submitted to Kaggle to evaluate the live public leaderboard score.</li>
+    </ul>
+
+    <h4 style="color:#0f172a;margin:14px 0 8px 0;font-size:0.95rem">The Input Feature Specification</h4>
+    <p style="margin:0 0 10px 0;text-align:justify;text-justify:inter-word">Each record in the dataset is structured across four primary input columns:</p>
+    <ul style="margin:0 0 14px 0;padding-left:1.2em;color:#2c3e50">
+      <li style="margin-bottom:8px;text-align:justify;text-justify:inter-word"><strong><code>id</code> (Integer &bull; Primary Key):</strong> A unique integer identifier for each tweet sample (e.g., <code>1</code>, <code>4</code>, <code>10873</code>). In the test set, predictions must be mapped directly back to this identifier for submission scoring.</li>
+      <li style="margin-bottom:8px;text-align:justify;text-justify:inter-word"><strong><code>text</code> (String &bull; Primary Feature &bull; 0% Missing):</strong> The raw textual body of the tweet (up to 280 characters). Contains colloquial Twitter syntax: user mentions (<code>@user</code>), hashtags (<code>#earthquake</code>), shortened URLs (<code>http://t.co/...</code>), irregular punctuation strings, and out-of-vocabulary typos. The <code>text</code> field is 100% complete across both training and test sets.</li>
+      <li style="margin-bottom:8px;text-align:justify;text-justify:inter-word"><strong><code>keyword</code> (Categorical String &bull; 0.80% Missing):</strong> A pre-extracted keyword designating the emergency topic (e.g., <code>ablaze</code>, <code>derailment</code>, <code>evacuate</code>, <code>wildfire</code>). Across the corpus, there are <strong>221 unique keyword classes</strong>. The column is missing in <strong>61 training samples (0.80%)</strong> and <strong>26 test samples (0.80%)</strong>. When present, it provides high-signal categorical priors; when null, the sentence narrative carries the entire classification burden.</li>
+      <li style="margin-bottom:8px;text-align:justify;text-justify:inter-word"><strong><code>location</code> (Unstructured String &bull; ~33.5% Missing):</strong> The author&rsquo;s profile-declared location. Highly noisy, unstructured, and nullable. It is missing in <strong>2,533 training tweets (33.27%)</strong> and <strong>1,105 test tweets (33.86%)</strong>. Beyond standard cities or countries, entries frequently contain whimsical non-geographic descriptions (e.g., &ldquo;Worldwide&rdquo;, &ldquo;in your heart&rdquo;, &ldquo;planet Earth&rdquo;), making naive one-hot encoding unviable.</li>
+    </ul>
+
+    <h4 style="color:#0f172a;margin:14px 0 8px 0;font-size:0.95rem">The Target Objective &amp; Prior Distribution</h4>
+    <p style="margin:0 0 10px 0;text-align:justify;text-justify:inter-word">The supervision objective is binary classification formulated as the column <strong><code>target</code></strong>:</p>
+    <ul style="margin:0 0 12px 0;padding-left:1.2em;color:#2c3e50">
+      <li style="margin-bottom:6px;text-align:justify;text-justify:inter-word"><strong><code>target = 1</code> (Disaster Event):</strong> Denotes that the tweet is communicating a genuine, literal emergency, hazard, or disaster. In the training set, this class contains <strong>3,271 tweets (42.97%)</strong>.</li>
+      <li style="margin-bottom:6px;text-align:justify;text-justify:inter-word"><strong><code>target = 0</code> (Non-Disaster Event):</strong> Denotes that the tweet does not communicate a real disaster (e.g., metaphorical use, news opinion, artistic expression, or banter). In the training set, this class represents the mild majority with <strong>4,342 tweets (57.03%)</strong>.</li>
+    </ul>
+    <p style="margin:0;font-weight:600;color:#1e40af;text-align:justify;text-justify:inter-word">Distribution Alignment: The prior ratio in training (57.03% negative vs 42.97% positive) precisely matches the test ground truth uncovered in our baseline probe (57.03% negative vs 42.97% positive), verifying zero macroscopic class shift across partitions.</p>
+  </div>
+</div>
+
 <div style="border:1px solid #1e293b;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#1e293b;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    2 &nbsp;&middot;&nbsp; The Full 10-Experiment Scorecard &amp; Leaderboard Progression
+    3 &nbsp;&middot;&nbsp; The Full 10-Experiment Scorecard &amp; Leaderboard Progression
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.6">
     <p style="margin:0 0 10px 0">Before examining each milestone in detail, below is the chronological progression of our submissions evaluated against Kaggle's live public leaderboard (3,263 unseen tweets):</p>
 
-    <div class="ml-scroll-table wp-block-table" style="margin:12px 0;width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch">
+    <div class="ml-scroll-table wp-block-table" style="margin:12px 0;width:100%;max-width:100%;overflow:auto">
       <table class="has-fixed-layout" style="width:100%;min-width:680px;border-collapse:collapse;font-size:0.86rem;line-height:1.5">
 <thead>
           <tr style="background:#1a2f45;color:#e8f4f8">
@@ -176,12 +212,12 @@
 <!-- SECTION 2: THE 3 BASELINE SUBMISSIONS -->
 <div style="border:1px solid #1e5c87;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#1e5c87;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    3 &nbsp;&middot;&nbsp; Zero-Learning Baselines: Probing the Live Leaderboard
+    4 &nbsp;&middot;&nbsp; Zero-Learning Baselines: Probing the Live Leaderboard
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.6">
     <p style="margin:0 0 10px 0">In scientific data science, the first submissions should never be complex architectures. They must be <strong>zero-learning heuristic baselines</strong> that map the extreme boundaries of the scoring engine:</p>
 
-    <div class="ml-scroll-table wp-block-table" style="margin:12px 0;width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch">
+    <div class="ml-scroll-table wp-block-table" style="margin:12px 0;width:100%;max-width:100%;overflow:auto">
       <table class="has-fixed-layout" style="width:100%;min-width:640px;border-collapse:collapse;font-size:0.88rem;line-height:1.5;text-align:left">
         <thead>
           <tr style="background:#1a2f45;color:#e8f4f8">
@@ -235,7 +271,7 @@
 <!-- SECTION 3: THE MATHEMATICAL PROOF -->
 <div style="border:1px solid #0f766e;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#0f766e;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    4 &nbsp;&middot;&nbsp; The Mathematical Proof: Unmasking Categorical Accuracy
+    5 &nbsp;&middot;&nbsp; The Mathematical Proof: Unmasking Categorical Accuracy
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
     <p style="margin:0 0 10px 0">The official Kaggle competition overview states:</p>
@@ -258,7 +294,7 @@
     <div style="background:#f8fafc;padding:12px;border-left:3px solid #0f766e;font-family:monospace;margin:10px 0">
       Score(Constant 0) = 0.57033<br>
       Score(Constant 1) = 0.42966<br>
-      Sum = 0.57033 + 0.42966 = 0.99999 &approx; 1.00000
+      Sum = 0.57033 + 0.42966 = 0.99999 &amp;approx; 1.00000
     </div>
 
     <p style="margin:8px 0 10px 0">
@@ -278,7 +314,7 @@
 <!-- SECTION 4: REVERSE ENGINEERING THE TEST SET -->
 <div style="border:1px solid #b45309;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#b45309;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    5 &nbsp;&middot;&nbsp; Reverse-Engineering the 3,263 Unseen Test Samples
+    6 &nbsp;&middot;&nbsp; Reverse-Engineering the 3,263 Unseen Test Samples
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
     <p style="margin:0 0 10px 0">Because our baseline probes returned exact classification accuracies, we can reverse-engineer the true class distribution of Kaggle's test partition:</p>
@@ -300,7 +336,7 @@
 <!-- SECTION 5: PHASE 1 CLASSICAL ML -->
 <div style="border:1px solid #334155;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#334155;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    6 &nbsp;&middot;&nbsp; Phase 1: Feature Engineering &amp; Subword N-Grams (0.795 &rarr; 0.805)
+    7 &nbsp;&middot;&nbsp; Phase 1: Feature Engineering &amp; Subword N-Grams (0.795 &rarr; 0.805)
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.6">
     <p style="margin:0 0 10px 0">Leaving zero-learning baselines behind, we implemented disciplined text preprocessing and feature engineering:</p>
@@ -319,10 +355,10 @@
   </div>
 </div>
 
-<!-- SECTION 6: THE DUPLICATE ENTRIES & LEAK ISSUE -->
+<!-- SECTION 6: THE DUPLICATE ENTRIES &amp; LEAK ISSUE -->
 <div style="border:1px solid #b91c1c;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#b91c1c;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    7 &nbsp;&middot;&nbsp; The Retweet Duplicate Phenomenon &amp; Train-to-Test Leakage Trap
+    8 &nbsp;&middot;&nbsp; The Retweet Duplicate Phenomenon &amp; Train-to-Test Leakage Trap
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
     <p style="margin:0 0 10px 0">Before scaling up to heavy transformer embeddings, exploratory data analysis unmasked a critical data quality phenomenon unique to social media corpora: <strong>massive verbatim duplication</strong> caused by retweets, automated bot alerts, and syndicated news wires.</p>
@@ -341,7 +377,7 @@
       If fed raw into loss functions, contradictory labels corrupt gradient updates. We resolved this via <strong>group-level majority voting</strong>:
     </p>
 
-    <pre style="background:#0f172a;color:#e2e8f0;padding:12px;border-radius:4px;overflow-x:auto;font-size:0.82rem;line-height:1.5;margin:8px 0"><code># Resolve conflicting crowd-worker labels via majority vote
+    <pre style="background:#0f172a;color:#e2e8f0;padding:12px;border-radius:4px;font-size:0.82rem;line-height:1.5;margin:8px 0"><code># Resolve conflicting crowd-worker labels via majority vote
 vote = train.groupby('text')['target'].agg(lambda s: s.value_counts().index[0]).to_dict()
 y = train['text'].map(vote).values</code></pre>
 
@@ -373,7 +409,7 @@ y = train['text'].map(vote).values</code></pre>
 <!-- SECTION 7: PHASE 2 TRANSFORMERS ON MOBILE -->
 <div style="border:1px solid #4338ca;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#4338ca;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    8 &nbsp;&middot;&nbsp; Phase 2: Frozen Pretrained Transformers on Mobile CPU
+    9 &nbsp;&middot;&nbsp; Phase 2: Frozen Pretrained Transformers on Mobile CPU
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
     <p style="margin:0 0 10px 0">Fine-tuning full transformer architectures on an Android smartphone CPU causes memory throttling and excessive runtimes. Instead, we adopted an elegant edge ML strategy: <strong>frozen backbone feature extraction</strong>.</p>
@@ -389,7 +425,7 @@ y = train['text'].map(vote).values</code></pre>
 <!-- SECTION 8: PHASE 3 DUAL BACKBONE -->
 <div style="border:1px solid #15803d;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#15803d;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    9 &nbsp;&middot;&nbsp; Phase 3: The 768-D Dual-Backbone Synergy (0.824 &rarr; 0.829)
+    10 &nbsp;&middot;&nbsp; Phase 3: The 768-D Dual-Backbone Synergy (0.824 &rarr; 0.829)
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
     <p style="margin:0 0 10px 0">While single backbones performed well, concatenating the 384-D MiniLM representation with the 384-D BGE-Small representation produced an information-dense <strong>768-D joint embedding vector</strong>:</p>
@@ -405,13 +441,13 @@ y = train['text'].map(vote).values</code></pre>
 <!-- SECTION 9: PHASE 4 MULTI-LOSS HYBRID -->
 <div style="border:1px solid #7c2d12;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#7c2d12;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    10 &nbsp;&middot;&nbsp; Phase 4: Multi-Loss Hybrid Ensembling &amp; Calibration (Breaking 0.830)
+    11 &nbsp;&middot;&nbsp; Phase 4: Multi-Loss Hybrid Ensembling &amp; Calibration (Breaking 0.830)
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#1e293b">
     <p style="margin:0 0 10px 0">To push beyond Rank #147, we introduced <strong>loss-function diversity</strong> across multiple hypothesis spaces. Instead of relying solely on logistic regression ($L_2$ regularized cross-entropy), we incorporated Ridge classification ($L_2$ regularized squared loss / margin penalty) mapped to probabilities via sigmoid activation (<code>expit(decision_function)</code>).</p>
     <p style="margin:0 0 10px 0">On dense 768-D embeddings, Ridge regression actually outperformed Logistic Regression (<code>0.7879</code> vs <code>0.7863</code> F1). We formulated a 5-model multi-loss ensemble spanning three distinct representation spaces:</p>
 
-    <div class="ml-scroll-table wp-block-table" style="margin:12px 0;width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch">
+    <div class="ml-scroll-table wp-block-table" style="margin:12px 0;width:100%;max-width:100%;overflow:auto">
       <table class="has-fixed-layout" style="width:100%;min-width:600px;border-collapse:collapse;font-size:0.88rem;line-height:1.5">
         <thead>
           <tr style="background:#1a2f45;color:#e8f4f8">
@@ -483,10 +519,10 @@ y = train['text'].map(vote).values</code></pre>
   </div>
 </div>
 
-<!-- SECTION 11: CONCLUSION & REPRODUCTION -->
+<!-- SECTION 11: CONCLUSION &amp; REPRODUCTION -->
 <div style="border:1px solid #1a2f45;border-radius:4px;margin:1.6em 0;overflow:hidden">
   <div style="background:#1a2f45;color:white;padding:11px 18px;font-size:1.05rem;font-weight:700;line-height:1.4">
-    11 &nbsp;&middot;&nbsp; Mobile Compute Efficiency Profile &amp; Key Takeaways
+    12 &nbsp;&middot;&nbsp; Mobile Compute Efficiency Profile &amp; Key Takeaways
   </div>
   <div style="padding:14px 18px;background:#fff;font-size:0.875rem;line-height:1.65;color:#2c3e50">
     <h4 style="color:#0f172a;margin:0 0 10px 0;font-size:0.95rem">Mobile Compute Efficiency Profile</h4>
